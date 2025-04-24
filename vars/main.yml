@@ -1,0 +1,14 @@
+---
+# vars file for cephadm_kolla_multinode
+mon_ip: "{{ hostvars[groups['deployer'][0]].ceph_ip | ansible.utils.ipaddr('address') }}"
+cluster_network: 10.0.20.0/24
+ceph_initial_dashboard_user: admin
+ceph_initial_dashboard_password: admin
+kolla_directory: /opt/kolla
+kolla_config: /etc/kolla
+kolla_venv: kolla-venv
+NIC_mgmt: eno8303
+NIC_external: eno12399np0
+NIC_ceph: enp202s0f0np0
+NIC_tunnel: enp202s0f1np1
+virtual_ip: 192.168.86.136

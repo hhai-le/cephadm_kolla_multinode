@@ -1,0 +1,17 @@
+{% for host in groups["ceph_mon"] %}
+ceph orch host label add {{ hostvars[host].inventory_hostname }} mon
+{% endfor %}
+ceph orch apply mon -unmanaged
+{% for host in groups["ceph_mon"] %}
+ceph orch daemon add mon {{ hostvars[host].inventory_hostname }}:{{ hostvars[host].ceph_ip | ansible.utils.ipaddr('address') }}
+{% endfor %}
+ceph orch apply mon --placement="
+{%- for host in groups["ceph_mon"] %}
+{{ hostvars[host].inventory_hostname -}} {{- "," if not loop.last else "" -}}
+{%- endfor -%}
+" --dry-run
+ceph orch apply mon --placement="
+{%- for host in groups["ceph_mon"] %}
+{{ hostvars[host].inventory_hostname -}} {{- "," if not loop.last else "" -}}
+{%- endfor -%}
+"

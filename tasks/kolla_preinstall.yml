@@ -1,0 +1,92 @@
+---
+- name: install requirement packages for kolla-ansible
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python3-dev
+    - libffi-dev
+    - gcc
+    - libssl-dev
+    - python3-selinux
+    - python3-setuptools
+    - python3-venv
+    - crudini
+    - python3-openstackclient
+    - openvswitch-switch
+    - python3-neutronclient
+
+- name: create venv for kolla
+  shell: "mkdir -p {{ kolla_directory }}"
+
+#- name: copy kolla-venv
+#  unarchive:
+#    src: /opt/ansible/kolla-ansible.tar
+#    dest: "{{ kolla_directory }}"
+#    owner: root
+#    group: root
+#
+#- name: copy ansible collections for kolla
+#  unarchive:
+#    src: /opt/ansible/ansible_collections.tar
+#    dest: /root/
+#    owner: root
+#    group: root
+#    mode: '0755'
+
+- name: copying install kolla script
+  template:
+    src: install_kolla.sh.j2
+    dest: /tmp/install_kolla.sh
+
+- name: running install kolla script
+  shell: /bin/bash /tmp/install_kolla.sh
+
+- name: copy multinode_edit script to server
+  copy:
+    src: files/clear_multinode.sh
+    dest: /tmp/clear_multinode.sh
+    mode: '0755'
+
+- name: clear multinode 
+  shell: /bin/bash /tmp/clear_multinode.sh
+
+- name: template update multinode
+  template:
+    src: openstack_multinode.sh.j2
+    dest: /tmp/openstack_multinode.sh
+
+- name: update multinode 
+  shell: /bin/bash /tmp/openstack_multinode.sh
+
+- name: edit globals.yml
+  template:
+    src: globals.yml.j2
+    dest: "{{ kolla_config }}/globals.yml"
+  
+- name: kolla-genpwd
+  shell: "{{kolla_directory}}/{{kolla_venv}}/bin/kolla-genpwd"
+
+- name: octavia generate template
+  template:
+    src: octavia_cert_gen.sh.j2
+    dest: /tmp/octavia_cert_gen.sh
+
+- name: octavia generating
+  shell: /bin/bash /tmp/octavia_cert_gen.sh
+
+- name: create kolla config dir
+  template: 
+    src: kolla_config_dir.sh.j2
+    dest: /tmp/kolla_config_dir.sh
+
+- name: running kolla config dir script
+  shell: /bin/bash /tmp/kolla_config_dir.sh
+
+- name: copying keyring for ceph
+  template: 
+    src: keyring.sh.j2
+    dest: /tmp/keyring.sh
+
+- name: running ceph keyring copy script
+  shell: /bin/bash /tmp/keyring.sh

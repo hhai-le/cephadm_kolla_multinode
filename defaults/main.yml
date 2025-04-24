@@ -1,0 +1,3 @@
+---
+# defaults file for cephadm_kolla_multinode
+KOLLA_BRANCH_NAME: "master"

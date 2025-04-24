@@ -1,0 +1,19 @@
+{% for host in groups["openstack_control"] %}
+crudini --set {{ kolla_config }}/multinode control {{ host }}
+{% endfor %}
+
+{% for host in groups["openstack_network"] %}
+crudini --set {{ kolla_config }}/multinode network {{ host }}
+{% endfor %}
+
+{% for host in groups["openstack_compute"] %}
+crudini --set {{ kolla_config }}/multinode compute {{ host }}
+{% endfor %}
+
+{% for host in groups["openstack_monitoring"] %}
+crudini --set {{ kolla_config }}/multinode monitoring {{ host }}
+{% endfor %}
+
+{% for host in groups["openstack_storage"] %}
+crudini --set {{ kolla_config }}/multinode storage {{ host }}
+{% endfor %}

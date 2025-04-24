@@ -1,0 +1,3 @@
+{% for host in groups['non_deployer'] %}
+ceph orch host add {{ hostvars[host].inventory_hostname }} {{ hostvars[host].ceph_ip | ansible.utils.ipaddr('address') }}
+{% endfor %}

@@ -1,0 +1,15 @@
+#!/bin/bash
+find /etc/ceph/ -type f | xargs sed -i $'s/\t//g'
+cp /etc/ceph/ceph.conf {{ kolla_config }}/config/cinder/
+cp /etc/ceph/ceph.conf {{ kolla_config }}/config/nova/
+cp /etc/ceph/ceph.conf {{ kolla_config }}/config/glance/
+cp /etc/ceph/ceph.client.glance.keyring {{ kolla_config }}/config/glance/
+cp /etc/ceph/ceph.client.nova.keyring {{ kolla_config }}/config/nova/
+cp /etc/ceph/ceph.client.cinder.keyring {{ kolla_config }}/config/nova/
+cp /etc/ceph/ceph.client.cinder.keyring {{ kolla_config }}/config/cinder/cinder-volume/
+cp /etc/ceph/ceph.client.cinder.keyring {{ kolla_config }}/config/cinder/cinder-backup/
+cp /etc/ceph/ceph.client.cinder-backup.keyring {{ kolla_config }}/config/cinder/cinder-backup/
+
+{% for node in groups["non_deployer"] %}
+scp -r /etc/ceph/ root@{{ hostvars[node].inventory_hostname }}:/etc/
+{% endfor %}

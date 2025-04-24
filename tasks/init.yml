@@ -1,0 +1,51 @@
+---
+- name: update host
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: edit nrconf
+  lineinfile:
+    path: /etc/needrestart/conf.d/no-prompt.conf
+    line: $nrconf{restart} = 'a';
+    state: present
+    create: true
+
+- name: edit nrconf
+  lineinfile:
+    path: /etc/needrestart/conf.d/no-prompt.conf
+    line: $nrconf{restart} = 'a';
+    state: present
+    create: true
+
+- name: disable unattended-upgrades
+  systemd:
+    name: unattended-upgrades
+    enabled: false
+    state: stopped
+
+- name: install chrony
+  apt:
+    name: chrony
+    state: present
+    update_cache: true
+
+- name: chronyd template
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+
+- name: restart chronyd service
+  systemd_service:
+    name: chronyd
+    state: restarted
+
+- name: timedatectl
+  shell: |
+    timedatectl set-ntp true
+    timedatectl set-timezone Asia/Singapore
+
+- name: update
+  apt:
+    name: '*'
+    state: latest

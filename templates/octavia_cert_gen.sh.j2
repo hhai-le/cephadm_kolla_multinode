@@ -1,0 +1,155 @@
+#!/bin/bash
+
+mkdir -p /opt/octavia_certs
+cd /opt/octavia_certs
+chmod 700 /opt/octavia_certs
+cat /etc/kolla/passwords.yml | grep octavia_ca_password| awk -F" " '{print $2}' > passphrase.txt
+chmod 600 passphrase.txt
+
+cat > openssl.cnf <<'EOF'
+# OpenSSL root CA configuration file.
+
+[ ca ]
+# `man ca`
+default_ca = CA_default
+
+[ CA_default ]
+# Directory and file locations.
+dir               = ./
+certs             = $dir/certs
+crl_dir           = $dir/crl
+new_certs_dir     = $dir/newcerts
+database          = $dir/index.txt
+serial            = $dir/serial
+RANDFILE          = $dir/private/.rand
+
+# The root key and root certificate.
+private_key       = $dir/private/ca.key.pem
+certificate       = $dir/certs/ca.cert.pem
+
+# For certificate revocation lists.
+crlnumber         = $dir/crlnumber
+crl               = $dir/crl/ca.crl.pem
+crl_extensions    = crl_ext
+default_crl_days  = 30
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md        = sha256
+
+name_opt          = ca_default
+cert_opt          = ca_default
+default_days      = 3650
+preserve          = no
+policy            = policy_strict
+
+[ policy_strict ]
+# The root CA should only sign intermediate certificates that match.
+# See the POLICY FORMAT section of `man ca`.
+countryName             = match
+stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+# Options for the `req` tool (`man req`).
+default_bits        = 2048
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md          = sha256
+
+# Extension to add when the -x509 option is used.
+x509_extensions     = v3_ca
+
+[ req_distinguished_name ]
+# See <https://en.wikipedia.org/wiki/Certificate_signing_request>.
+countryName                     = SG
+stateOrProvinceName             = Singapore
+localityName                    = Singapore
+0.organizationName              = Alpha Networks
+organizationalUnitName          = IT
+commonName                      = as132337.net
+emailAddress                    = hai.le@as132337.net
+
+# Optionally, specify some defaults.
+countryName_default             = SG
+stateOrProvinceName_default     = Singapore
+localityName_default            =
+0.organizationName_default      = OpenStack
+organizationalUnitName_default  = Octavia
+emailAddress_default            =
+commonName_default              = as132337.net
+
+[ v3_ca ]
+# Extensions for a typical CA (`man x509v3_config`).
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ usr_cert ]
+# Extensions for client certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+[ crl_ext ]
+# Extension for CRLs (`man x509v3_config`).
+authorityKeyIdentifier=keyid:always
+EOF
+
+mkdir client_ca
+mkdir server_ca
+
+cd server_ca
+mkdir certs crl newcerts private
+cp ../passphrase.txt ./
+chmod 700 private
+touch index.txt
+echo 1000 > serial
+
+openssl genpkey -algorithm RSA -out private/ca.key.pem -aes-128-cbc -pass file:passphrase.txt -pkeyopt rsa_keygen_bits:4096 
+chmod 400 private/ca.key.pem
+openssl req -config ../openssl.cnf -key private/ca.key.pem -new -x509 -days 7300 -sha256 -passin file:passphrase.txt -extensions v3_ca -out certs/ca.cert.pem -subj "/C=SG/ST=Singapore/L=Singapore/O=Alpha Networks/CN=as123337.net"
+
+cd ../client_ca
+mkdir certs crl csr newcerts private
+cp ../passphrase.txt ./
+chmod 700 private
+touch index.txt
+echo 1000 > serial
+
+openssl genpkey -algorithm RSA -out private/ca.key.pem -aes-128-cbc -pass file:passphrase.txt -pkeyopt rsa_keygen_bits:4096
+chmod 400 private/ca.key.pem
+openssl req -config ../openssl.cnf -key private/ca.key.pem -new -x509 -days 7300 -sha256 -passin file:passphrase.txt -extensions v3_ca -out certs/ca.cert.pem -subj "/C=SG/ST=Singapore/L=Singapore/O=Alpha Networks/CN=as123337.net"
+
+openssl genpkey -algorithm RSA -out private/client.key.pem -aes-128-cbc -pass file:passphrase.txt -pkeyopt rsa_keygen_bits:2048
+openssl req -config ../openssl.cnf -new -sha256 -passin file:passphrase.txt -key private/client.key.pem -out csr/client.csr.pem -subj "/C=SG/ST=Singapore/L=Singapore/O=Alpha Networks/CN=as123337.net"
+openssl ca -config ../openssl.cnf -extensions usr_cert -days 7300 -passin file:passphrase.txt -notext -md sha256 -in csr/client.csr.pem -out certs/client.cert.pem -batch
+
+openssl rsa -in private/client.key.pem -passin file:passphrase.txt -out private/client.cert-and-key.pem
+cat certs/client.cert.pem >> private/client.cert-and-key.pem
+
+mkdir -p /etc/kolla/config/octavia/
+cd /opt/octavia_certs
+cp client_ca/certs/ca.cert.pem /etc/kolla/config/octavia/client_ca.cert.pem
+cp server_ca/certs/ca.cert.pem /etc/kolla/config/octavia/server_ca.cert.pem
+cp server_ca/private/ca.key.pem /etc/kolla/config/octavia/server_ca.key.pem
+cp client_ca/private/client.cert-and-key.pem /etc/kolla/config/octavia/client.cert-and-key.pem

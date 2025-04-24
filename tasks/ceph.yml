@@ -1,0 +1,64 @@
+---
+- name: cephadm bootstrap template
+  template: 
+    src: cephadm_bootstrap.sh.j2
+    dest: /tmp/cephadm_bootstrap.sh
+
+- name: run cephadm bootstrap
+  shell: /bin/bash /tmp/cephadm_bootstrap.sh
+
+- name: generate ceph.pub scripts
+  template:
+    src: ceph_pub.sh.j2
+    dest: /tmp/ceph_pub.sh
+    mode: '0755'
+
+- name: run update ceph.pub scripts
+  shell: /bin/bash /tmp/ceph_pub.sh
+
+- name: install ceph-common
+  apt: 
+    name: ceph-common
+    state: present
+
+- name: template add host to cluster
+  template:
+    src: ceph_orch_host_add.sh.j2
+    dest: /tmp/ceph_orch_host_add.sh
+
+- name: add host to cluster
+  shell: /bin/bash /tmp/ceph_orch_host_add.sh
+
+- name: template deploy mon
+  template:
+    src: ceph_orch_apply_mon.sh.j2
+    dest: /tmp/ceph_orch_apply_mon.sh
+
+- name: deploy mon
+  shell: /bin/bash /tmp/ceph_orch_apply_mon.sh
+
+- name: template deploy osd
+  template:
+    src: ceph_orch_apply_osd.sh.j2
+    dest: /tmp/ceph_orch_apply_osd.sh
+
+- name: deploy osd
+  shell: /bin/bash /tmp/ceph_orch_apply_osd.sh
+
+- name: create osd pool
+  shell: |
+    ceph osd pool create volumes
+    ceph osd pool create images
+    ceph osd pool create backup
+    ceph osd pool create vms
+    rbd pool init volumes
+    rbd pool init images
+    rbd pool init backup
+    rbd pool init vms
+
+- name: create keyring
+  shell: |
+    ceph auth get-or-create client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=images' -o /etc/ceph/ceph.client.glance.keyring
+    ceph auth get-or-create client.cinder mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=images' -o /etc/ceph/ceph.client.cinder.keyring
+    ceph auth get-or-create client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rx pool=images' -o /etc/ceph/ceph.client.nova.keyring
+    ceph auth get-or-create client.cinder-backup mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=backups' -o /etc/ceph/ceph.client.cinder-backup.keyring

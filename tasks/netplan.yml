@@ -1,0 +1,17 @@
+---
+- name: backup current config
+  command: mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
+
+- name: disable cloud-init
+  template:
+    src: 99-disable-network-config.cfg.j2
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+
+- name: template netplan
+  template:
+    src: 00-config.yaml.j2
+    dest: /etc/netplan/00-config.yaml
+    mode: '0600'
+
+- name: apply netplan
+  shell: netplan apply

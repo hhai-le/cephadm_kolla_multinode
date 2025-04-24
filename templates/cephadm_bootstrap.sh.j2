@@ -1,0 +1,6 @@
+#!/bin/bash
+cephadm bootstrap --mon-ip "{{ mon_ip }}" \
+ --cluster-network "{{ cluster_network }}"\
+ --initial-dashboard-user "{{ ceph_initial_dashboard_user }}" \
+ --initial-dashboard-password "{{ ceph_initial_dashboard_password }}" \
+ --dashboard-password-noupdate | tee /var/log/cephadm_bootstrap.log

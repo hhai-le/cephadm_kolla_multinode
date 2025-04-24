@@ -1,0 +1,4 @@
+#!/bin/bash
+{% for node in groups["linux"] %}
+cat /etc/ceph/ceph.pub | ssh root@{{ hostvars[node].inventory_hostname }} "cat >> /root/.ssh/authorized_keys"
+{% endfor %}

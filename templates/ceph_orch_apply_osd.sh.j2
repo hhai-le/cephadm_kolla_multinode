@@ -1,0 +1,8 @@
+{% for host in groups['ceph_osd'] %}
+ceph orch host label add {{ hostvars[host].inventory_hostname }} osd
+{% endfor %}
+{% for host in groups["ceph_osd"] %}
+{% for dev in hostvars[host].device %}
+ceph orch daemon add osd {{ hostvars[host].inventory_hostname }}:{{ dev }}
+{% endfor %}
+{% endfor %}

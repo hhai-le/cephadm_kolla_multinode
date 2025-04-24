@@ -1,0 +1,10 @@
+#!/bin/bash
+chmod 600 /root/.ssh/id_rsa
+chmod 600 /root/.ssh/id_rsa.pub
+chmod 700 /root/.ssh/
+{% for node in groups["linux"] %}
+ssh-keygen -R {{ hostvars[node].inventory_hostname }}
+ssh-keyscan -H {{ hostvars[node].inventory_hostname }} >> /root/.ssh/known_hosts
+ssh-keygen -R {{ hostvars[node].ansible_host }}
+ssh-keyscan -H {{ hostvars[node].ansible_host }} >> /root/.ssh/known_hosts
+{% endfor %}

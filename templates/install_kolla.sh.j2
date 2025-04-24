@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd {{ kolla_directory }}
+python3 -m venv {{ kolla_venv }}
+source {{ kolla_directory }}/{{ kolla_venv }}/bin/activate
+{{ kolla_directory }}/{{ kolla_venv }}/bin/pip install -U pip
+{{ kolla_directory }}/{{ kolla_venv }}/bin/pip install 'ansible-core>=2.14,<=2.16'
+{{ kolla_directory }}/{{ kolla_venv }}/bin/pip install git+https://opendev.org/openstack/kolla-ansible@"{{ KOLLA_BRANCH_NAME }}"
+{{ kolla_directory }}/{{ kolla_venv }}/bin/kolla-ansible install-deps
+mkdir -p {{ kolla_config }}
+cp -r {{ kolla_directory }}/kolla-venv/share/kolla-ansible/etc_examples/kolla/* {{ kolla_config }}
+cp {{ kolla_directory }}/kolla-venv/share/kolla-ansible/ansible/inventory/* {{ kolla_config }}

@@ -1,0 +1,17 @@
+---
+- name: creating /opt/images for images
+  file:
+    path: /opt/images
+    state: directory
+  
+- name: copy docker images to servers
+  copy:
+    src: "/opt/images/cephadm_kolla.tar"
+    dest: /opt/images
+    owner: root
+    mode: 0775
+
+- name: import images
+  shell: docker load --input cephadm_kolla.tar
+  args:
+    chdir: /opt/images

@@ -1,0 +1,87 @@
+deployer:
+  hosts:
+    sg1n-optest-1:
+non_deployer:
+  hosts:
+    sg1n-optest-2:
+    sg1n-optest-3:
+ceph_mon:
+  hosts:
+    sg1n-optest-1:
+    sg1n-optest-2:
+    sg1n-optest-3:
+ceph_osd:
+  hosts:
+    sg1n-optest-1:
+      device:
+        - /dev/sdb
+        - /dev/sdc
+        - /dev/sdd
+        - /dev/sde
+    sg1n-optest-2:
+      device:
+        - /dev/sda
+        - /dev/sdb
+        - /dev/sdc
+        - /dev/sdd
+    sg1n-optest-3:
+      device:
+        - /dev/sda
+        - /dev/sdb
+        - /dev/sdc
+        - /dev/sdd
+openstack_control:
+  hosts:
+    sg1n-optest-1:
+openstack_network:
+  hosts:
+    sg1n-optest-1:
+openstack_compute:
+  hosts:
+    sg1n-optest-1:
+    sg1n-optest-2:
+    sg1n-optest-3:
+openstack_monitoring:
+  hosts:
+    sg1n-optest-1:
+openstack_storage:
+  hosts:
+    sg1n-optest-1:
+    sg1n-optest-2:
+    sg1n-optest-3:
+linux:
+  hosts:
+    sg1n-optest-1:
+      ansible_host: 192.168.86.137
+      mgmt_ip: 192.168.86.137/24
+      tunnel_ip: 10.0.10.137/24
+      ceph_ip: 10.0.20.137/24
+      mgmt_default_gw: 192.168.86.1
+      external_ip: 10.11.21.40/24
+      dns1: 172.16.128.5
+      dns2: 172.16.128.6
+    sg1n-optest-2:
+      ansible_host: 192.168.86.138
+      mgmt_ip: 192.168.86.138/24
+      tunnel_ip: 10.0.10.138/24
+      ceph_ip: 10.0.20.138/24
+      mgmt_default_gw: 192.168.86.1
+      external_ip: 10.11.21.41/24
+      dns1: 172.16.128.5
+      dns2: 172.16.128.6
+    sg1n-optest-3:
+      ansible_host: 192.168.86.139
+      mgmt_ip: 192.168.86.139/24
+      tunnel_ip: 10.0.10.139/24
+      ceph_ip: 10.0.20.139/24
+      mgmt_default_gw: 192.168.86.1
+      external_ip: 10.11.21.42/24
+      dns1: 172.16.128.5
+      dns2: 172.16.128.6
+  vars:
+    ansible_become: true
+    ansible_become_pass: Password
+    ansible_ssh_retries: 10
+    ansible_ssh_extra_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ansible_ssh_pass: Password
+    ansible_user: linuxadmin

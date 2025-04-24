@@ -1,0 +1,20 @@
+network:
+  version: 2
+  ethernets:
+    {{ NIC_mgmt }}:
+      addresses:
+      - {{ mgmt_ip }}
+      nameservers:
+        addresses:
+        - {{ dns1 }}
+        - {{ dns2 }}
+        search: []
+      routes:
+      - to: default
+        via: {{ mgmt_default_gw }}  
+    {{ NIC_ceph }}:
+      addresses:
+      - {{ ceph_ip }}
+    {{ NIC_tunnel }}:
+      addresses:
+      - {{ tunnel_ip }}

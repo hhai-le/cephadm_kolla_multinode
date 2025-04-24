@@ -1,0 +1,35 @@
+---
+- name: install common package for cephadm
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - chrony
+    - software-properties-common
+    - git
+    - curl
+    - vim
+    - bash-completion
+    - ansible
+
+- name: remove cephadm key if exist
+  file:
+    path: /etc/apt/trusted.gpg.d/ceph.gpg
+    state: absent
+
+- name: copy cephadm package
+  copy:
+    src: /opt/ansible/cephadm_18.2.4-1jammy_amd64.deb
+    dest: /opt/cephadm_18.2.4-1jammy_amd64.deb
+
+- name: install cephadm package
+  apt:
+    deb: /opt/cephadm_18.2.4-1jammy_amd64.deb
+    state: present
+    update_cache: true
+
+- name: install cephadm package
+  apt:
+    name: cephadm
+    state: present
+    update_cache: true
